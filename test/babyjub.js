@@ -1,38 +1,37 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-
-const createBlakeHash = require("blake-hash");
-const eddsa = require("../src/eddsa.js");
-
-const assert = chai.assert;
-
-const bigInt = require("snarkjs").bigInt;
+import { blake512 } from '@noble/hashes/blake1';
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import eddsa from '../src/eddsa.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const bigInt = snarkjs.bigInt;
 
 describe("Baby Jub test", function () {
     let circuitAdd;
     let circuitTest;
+    let circuitPbk;
 
-    this.timeout(100000);
-
-    before( async() => {
+    const init = async() => {
         const cirDefAdd = await compiler(path.join(__dirname, "circuits", "babyadd_tester.circom"));
         circuitAdd = new snarkjs.Circuit(cirDefAdd);
-        console.log("NConstrains BabyAdd: " + circuitAdd.nConstraints);
+        //console.log("NConstrains BabyAdd: " + circuitAdd.nConstraints);
 
         const cirDefTest = await compiler(path.join(__dirname, "circuits", "babycheck_test.circom"));
         circuitTest = new snarkjs.Circuit(cirDefTest);
-        console.log("NConstrains BabyTest: " + circuitTest.nConstraints);
+        //console.log("NConstrains BabyTest: " + circuitTest.nConstraints);
 
         const cirDefPbk = await compiler(path.join(__dirname, "circuits", "babypbk_test.circom"));
         circuitPbk = new snarkjs.Circuit(cirDefPbk);
-        console.log("NConstrains BabyPbk: " + circuitPbk.nConstraints);
+        //console.log("NConstrains BabyPbk: " + circuitPbk.nConstraints);
 
-    });
+    };
 
     it("Should add point (0,1) and (0,1)", async () => {
-
+        await init();
         const input={
             x1: snarkjs.bigInt(0),
             y1: snarkjs.bigInt(1),
@@ -50,7 +49,7 @@ describe("Baby Jub test", function () {
     });
 
     it("Should add 2 same numbers", async () => {
-
+        await init();
         const input={
             x1: snarkjs.bigInt("17777552123799933955779906779655732241715742912184938656739573121738514868268"),
             y1: snarkjs.bigInt("2626589144620713026669568689430873010625803728049924121243784502389097019475"),
@@ -68,7 +67,7 @@ describe("Baby Jub test", function () {
     });
 
     it("Should add 2 different numbers", async () => {
-
+        await init();
         const input={
             x1: snarkjs.bigInt("17777552123799933955779906779655732241715742912184938656739573121738514868268"),
             y1: snarkjs.bigInt("2626589144620713026669568689430873010625803728049924121243784502389097019475"),
@@ -91,11 +90,13 @@ describe("Baby Jub test", function () {
     });
 
     it("Should check 0 is a valid poiny", async() => {
+        await init();
         const w = circuitTest.calculateWitness({x: 0, y:1});
         assert(circuitTest.checkWitness(w));
     });
 
     it("Should check 0 is an invalid poiny", async() => {
+        await init();
         try {
             circuitTest.calculateWitness({x: 1, y: 0});
             assert(false, "Should be a valid point");
@@ -106,9 +107,9 @@ describe("Baby Jub test", function () {
     });
 
     it("Should extract the public key from the private one", async () => {
-
+        await init();
         const rawpvk = Buffer.from("0001020304050607080900010203040506070809000102030405060708090021", "hex");
-        const pvk    = eddsa.pruneBuffer(createBlakeHash("blake512").update(rawpvk).digest().slice(0,32));
+        const pvk    = eddsa.pruneBuffer(blake512(rawpvk).subarray(0, 32));
         const S      = bigInt.leBuff2int(pvk).shr(3);
 
         const A      = eddsa.prv2pub(rawpvk);
@@ -124,3 +125,4 @@ describe("Baby Jub test", function () {
     });
 
 });
+it.runWhen(import.meta.url);

@@ -1,17 +1,13 @@
-const chai = require("chai");
-const snarkjs = require("snarkjs");
-
-const eddsa = require("../src/eddsa.js");
-const babyJub = require("../src/babyjub.js");
-
-const assert = chai.assert;
+import { bytesToHex } from '@noble/hashes/utils';
+import { describe, it } from 'micro-should';
+import snarkjs from 'snarkjs';
+import babyJub from '../src/babyjub.js';
+import eddsa from '../src/eddsa.js';
+import { assert } from './test_utils.js';
 
 const bigInt = snarkjs.bigInt;
 
 describe("EdDSA js test", function () {
-
-    this.timeout(100000);
-
     it("Sign (using Mimc7) a single 10 bytes from 0 to 9", () => {
         const msgBuf = Buffer.from("00010203040506070809", "hex");
         const msg = bigInt.leBuff2int(msgBuf);
@@ -38,7 +34,7 @@ describe("EdDSA js test", function () {
             "2523202440825208709475937830811065542425109372212752003460238913256192595070");
 
         const pSignature = eddsa.packSignature(signature);
-        assert.equal(pSignature.toString("hex"), ""+
+        assert.equal(bytesToHex(pSignature), ""+
             "dfedb4315d3f2eb4de2d3c510d7a987dcab67089c8ace06308827bf5bcbe02a2"+
             "7ed40dab29bf993c928e789d007387998901a24913d44fddb64b1f21fc149405");
 
@@ -71,7 +67,7 @@ describe("EdDSA js test", function () {
             "248298168863866362217836334079793350221620631973732197668910946177382043688");
 
         const pSignature = eddsa.packSignature(signature);
-        assert.equal(pSignature.toString("hex"), ""+
+        assert.equal(bytesToHex(pSignature), ""+
             "dfedb4315d3f2eb4de2d3c510d7a987dcab67089c8ace06308827bf5bcbe02a2"+
             "28506bce274aa1b3f7e7c2fd7e4fe09bff8f9aa37a42def7994e98f322888c00");
 
@@ -80,3 +76,4 @@ describe("EdDSA js test", function () {
 
     });
 });
+it.runWhen(import.meta.url);

@@ -1,12 +1,12 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-const babyJub = require("../src/babyjub.js");
-
-const assert = chai.assert;
-
-const bigInt = snarkjs.bigInt;
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import babyJub from '../src/babyjub.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Montgomery test", function () {
     let circuitE2M;
@@ -20,25 +20,26 @@ describe("Montgomery test", function () {
 
     let mg, mg2, g2, g3, mg3;
 
-    this.timeout(100000);
-    before( async() => {
+    const init = async() => {
+        if (circuitE2M) return;
         const cirDefE2M = await compiler(path.join(__dirname, "circuits", "edwards2montgomery.circom"));
         circuitE2M = new snarkjs.Circuit(cirDefE2M);
-        console.log("NConstrains Edwards -> Montgomery: " + circuitE2M.nConstraints);
+        //console.log("NConstrains Edwards -> Montgomery: " + circuitE2M.nConstraints);
 
         const cirDefM2E = await compiler(path.join(__dirname, "circuits", "montgomery2edwards.circom"));
         circuitM2E = new snarkjs.Circuit(cirDefM2E);
-        console.log("NConstrains Montgomery -> Edwards: " + circuitM2E.nConstraints);
+        //console.log("NConstrains Montgomery -> Edwards: " + circuitM2E.nConstraints);
 
         const cirDefMAdd = await compiler(path.join(__dirname, "circuits", "montgomeryadd.circom"));
         circuitMAdd = new snarkjs.Circuit(cirDefMAdd);
-        console.log("NConstrains Montgomery Add: " + circuitMAdd.nConstraints);
+        //console.log("NConstrains Montgomery Add: " + circuitMAdd.nConstraints);
 
         const cirDefMDouble = await compiler(path.join(__dirname, "circuits", "montgomerydouble.circom"));
         circuitMDouble = new snarkjs.Circuit(cirDefMDouble);
-        console.log("NConstrains Montgomery Double: " + circuitMDouble.nConstraints);
-    });
+        //console.log("NConstrains Montgomery Double: " + circuitMDouble.nConstraints);
+    };
     it("Convert Edwards to Montgomery and back again", async () => {
+        await init();
         let w, xout, yout;
 
         w = circuitE2M.calculateWitness({ in: g});
@@ -57,6 +58,7 @@ describe("Montgomery test", function () {
         assert(yout.equals(g[1]));
     });
     it("Should double a point", async () => {
+        await init();
         let w, xout, yout;
 
         g2 = babyJub.addPoint(g,g);
@@ -77,6 +79,7 @@ describe("Montgomery test", function () {
         assert(yout.equals(g2[1]));
     });
     it("Should add a point", async () => {
+        await init();
         let w, xout, yout;
 
         g3 = babyJub.addPoint(g,g2);
@@ -97,3 +100,4 @@ describe("Montgomery test", function () {
         assert(yout.equals(g3[1]));
     });
 });
+it.runWhen(import.meta.url);

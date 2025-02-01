@@ -1,10 +1,12 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import snarkjs from 'snarkjs';
+import { assert } from './test_utils.js';
 
-const assert = chai.assert;
-
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const bigInt = snarkjs.bigInt;
 
 function print(circuit, w, s) {
@@ -20,20 +22,22 @@ function checkSub(_a,_b, circuit) {
 
     let res = a.sub(b);
     if (res.lesser(bigInt.zero)) res = res.add(bigInt.one.shl(16));
-    assert( w[circuit.getSignalIdx("main.out")].equals(bigInt(res)) );
+    assert(w[circuit.getSignalIdx("main.out")].equals(bigInt(res)) );
 }
 
 describe("BinSub test", () => {
     let circuit;
-    before( async() => {
+    const init = async() => {
+        if (circuit) return;
         const cirDef = await compiler(path.join(__dirname, "circuits", "binsub_test.circom"));
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains BinSub: " + circuit.nConstraints);
-    });
+        //console.log("NConstrains BinSub: " + circuit.nConstraints);
+    };
 
-    it("Should check variuos ege cases", async () => {
+    it("Should check variuos edge cases", async () => {
+        await init();
         checkSub(0,0, circuit);
         checkSub(1,0, circuit);
         checkSub(-1,0, circuit);
@@ -54,3 +58,4 @@ describe("BinSub test", () => {
 
 
 });
+it.runWhen(import.meta.url);

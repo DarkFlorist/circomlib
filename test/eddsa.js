@@ -1,14 +1,13 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-// const crypto = require("crypto");
-
-const eddsa = require("../src/eddsa.js");
-const babyJub = require("../src/babyjub.js");
-
-const assert = chai.assert;
-
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import babyJub from '../src/babyjub.js';
+import eddsa from '../src/eddsa.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const bigInt = snarkjs.bigInt;
 
 function print(circuit, w, s) {
@@ -32,18 +31,16 @@ function buffer2bits(buff) {
 
 describe("EdDSA test", function () {
     let circuit;
-
-    this.timeout(100000);
-
-    before( async () => {
+    const init = async () => {
         const cirDef = await compiler(path.join(__dirname, "circuits", "eddsa_test.circom"));
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains EdDSA: " + circuit.nConstraints);
-    });
+        //console.log("NConstrains EdDSA: " + circuit.nConstraints);
+    };
 
     it("Sign a single 10 bytes from 0 to 9", async () => {
+        await init();
         const msg = Buffer.from("00010203040506070809", "hex");
 
 //        const prvKey = crypto.randomBytes(32);
@@ -72,3 +69,4 @@ describe("EdDSA test", function () {
 
     });
 });
+it.runWhen(import.meta.url);

@@ -1,18 +1,9 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-const babyjub = require("../src/babyjub.js");
-
-const assert = chai.assert;
-
-// const bigInt = require("big-integer");
-
+import { describe, it } from 'micro-should';
+import snarkjs from 'snarkjs';
+import babyjub from '../src/babyjub.js';
+import { assert } from './test_utils.js';
 
 describe("Baby Jub js test", function () {
-
-    this.timeout(100000);
-
     it("Should add point (0,1) and (0,1)", () => {
 
         const p1 = [
@@ -164,3 +155,4 @@ describe("Baby Jub js test", function () {
         assert.equal(p2[1].toString(), "4338620300185947561074059802482547481416142213883829469920100239455078257889");
     });
 });
+it.runWhen(import.meta.url);

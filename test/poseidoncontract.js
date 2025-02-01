@@ -1,14 +1,9 @@
-const ganache = require("ganache-cli");
-const Web3 = require("web3");
-const chai = require("chai");
-const poseidonGenContract = require("../src/poseidon_gencontract.js");
-const Poseidon = require("../src/poseidon.js");
-const bigInt = require("snarkjs").bigInt;
-
-const assert = chai.assert;
-const log = (msg) => { if (process.env.MOCHA_VERBOSE) console.log(msg); };
-
-const SEED = "mimc";
+//import ganache from 'ganache';
+//import Web3 from 'web3';
+import { describe, it } from 'micro-should';
+import Poseidon from '../src/poseidon.js';
+import poseidonGenContract from '../src/poseidon_gencontract.js';
+import { assert } from './test_utils.js';
 
 describe("Poseidon Smart contract test", () => {
     let testrpc;
@@ -16,12 +11,14 @@ describe("Poseidon Smart contract test", () => {
     let mimc;
     let accounts;
 
-    before(async () => {
+    const init = async () => {
+        if (web3) return;
         web3 = new Web3(ganache.provider(), null, { transactionConfirmationBlocks: 1 });
         accounts = await web3.eth.getAccounts();
-    });
+    };
 
     it("Should deploy the contract", async () => {
+        await init();
         const C = new web3.eth.Contract(poseidonGenContract.abi);
 
         mimc = await C.deploy({
@@ -33,7 +30,7 @@ describe("Poseidon Smart contract test", () => {
     });
 
     it("Shold calculate the mimic correctly", async () => {
-
+        await init();
         const res = await mimc.methods.poseidon([1,2]).call();
 
         // console.log("Cir: " + bigInt(res.toString(16)).toString(16));
@@ -46,4 +43,5 @@ describe("Poseidon Smart contract test", () => {
         assert.equal(res.toString(), res2.toString());
     });
 });
+it.runWhen(import.meta.url);
 

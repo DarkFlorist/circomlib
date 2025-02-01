@@ -20,7 +20,7 @@
  * See csrc.nist.gov/groups/ST/toolkit/secure_hashing.html
  *     csrc.nist.gov/groups/ST/toolkit/examples.html
  */
-class Sha256 {
+export default class Sha256 {
 
     /**
      * Generates SHA-256 hash of string.

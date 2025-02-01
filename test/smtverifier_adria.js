@@ -1,10 +1,14 @@
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-const fs = require("fs")
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import smt from '../src/smt.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const bigInt = snarkjs.bigInt;
-const smt = require("../src/smt.js");
 
 const circuitSource = `
 include "../circuits/smt/smtverifier.circom";
@@ -32,17 +36,17 @@ component main = SMT(4);
 `;
 
 describe("smt3test", function () {
-    this.timeout(200000);
-
     let circuitFileName;
 
-    before( async () => {
+    const init = async () => {
+        if (circuitFileName) return;
         circuitFileName = path.join(__dirname, ".", "rawsmt3.circom");
         fs.writeFileSync(circuitFileName,circuitSource);
-    });
+    };
 
     const levels = 4;
     async function testsmt3(e1, e2) {
+        await init();
         let tree = await smt.newMemEmptyTrie();
 
         // insert e1, e2
@@ -72,7 +76,7 @@ describe("smt3test", function () {
     }
 
     it("TestSmts", async () => {
-
+        await init();
         const e1 = {
             hi: bigInt("17124152697573569611556136390143205198134245887034837071647643529178599000839"),
             hv: bigInt("19650379996168153643111744440707177573540245771926102415571667548153444658179"),
@@ -95,4 +99,5 @@ describe("smt3test", function () {
         await testsmt3(e1, e2fail);
     });
 });
+it.runWhen(import.meta.url);
 

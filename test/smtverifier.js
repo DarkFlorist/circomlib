@@ -1,12 +1,12 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-
-const smt = require("../src/smt.js");
-
-const assert = chai.assert;
-
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import smt from '../src/smt.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const bigInt = snarkjs.bigInt;
 
 function print(circuit, w, s) {
@@ -61,29 +61,29 @@ async function testExclusion(tree, key, circuit) {
 describe("SMT test", function () {
     let circuit;
     let tree;
-
-    this.timeout(100000);
-
-    before( async () => {
+    const init = async () => {
+        if (circuit) return;
         const cirDef = await compiler(path.join(__dirname, "circuits", "smtverifier10_test.circom"));
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains SMTVerifier: " + circuit.nConstraints);
+        //console.log("NConstrains SMTVerifier: " + circuit.nConstraints);
 
         tree = await smt.newMemEmptyTrie();
         await tree.insert(7,77);
         await tree.insert(8,88);
         await tree.insert(32,3232);
-    });
+    };
 
     it("Check inclussion in a tree of 3", async () => {
+        await init();
         await testInclusion(tree, 7, circuit);
         await testInclusion(tree, 8, circuit);
         await testInclusion(tree, 32, circuit);
     });
 
     it("Check exclussion in a tree of 3", async () => {
+        await init();
         await testExclusion(tree, 0, circuit);
         await testExclusion(tree, 6, circuit);
         await testExclusion(tree, 9, circuit);
@@ -94,6 +94,7 @@ describe("SMT test", function () {
     });
 
     it("Check not enabled accepts any thing", async () => {
+        await init();
         let siblings = [];
         for (let i=0; i<10; i++) siblings.push(i);
 
@@ -112,6 +113,7 @@ describe("SMT test", function () {
     });
 
     it("Check inclussion Adria case", async () => {
+        await init();
         const e1_hi= bigInt("17124152697573569611556136390143205198134245887034837071647643529178599000839");
         const e1_hv= bigInt("19650379996168153643111744440707177573540245771926102415571667548153444658179");
 
@@ -136,3 +138,4 @@ describe("SMT test", function () {
 
 
 });
+it.runWhen(import.meta.url);

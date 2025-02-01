@@ -1,10 +1,7 @@
-const chai = require("chai");
-const snarkjs = require("snarkjs");
-
-const smt = require("../src/smt.js");
-
-const assert = chai.assert;
-
+import { describe, it } from 'micro-should';
+import snarkjs from 'snarkjs';
+import smt from '../src/smt.js';
+import { assert } from './test_utils.js';
 const bigInt = snarkjs.bigInt;
 
 
@@ -25,10 +22,6 @@ function stringifyBigInts(o) {
 }
 
 describe("SMT Javascript test", function () {
-    this.timeout(100000);
-    before( async () => {
-    });
-
     it("Should insert 2 elements and empty them", async () => {
         const tree = await smt.newMemEmptyTrie();
         const key1 = bigInt(111);
@@ -180,3 +173,4 @@ describe("SMT Javascript test", function () {
     });
 
 });
+it.runWhen(import.meta.url);

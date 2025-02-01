@@ -1,13 +1,13 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const crypto = require("crypto");
-
-const compiler = require("circom");
-
-const assert = chai.assert;
-
-const sha256 = require("./helpers/sha256");
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as crypto from 'node:crypto';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import sha256 from './helpers/sha256.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // const printSignal = require("./helpers/printsignal");
 
@@ -52,8 +52,8 @@ describe("SHA256 test", () => {
         const cirDef = await compiler(path.join(__dirname, "circuits", "sha256_2_test.circom"));
         const circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("Vars: "+circuit.nVars);
-        console.log("Constraints: "+circuit.nConstraints);
+        //console.log("Vars: "+circuit.nVars);
+        //console.log("Constraints: "+circuit.nConstraints);
 
         const witness = circuit.calculateWitness({ "a": "1", "b": "2" });
 
@@ -71,14 +71,14 @@ describe("SHA256 test", () => {
         assert.equal(hash, hash2);
 
         assert(witness[1].equals(snarkjs.bigInt(r)));
-    }).timeout(1000000);
+    });
 
     it("Should calculate a hash of 2 compressor", async () => {
         const cirDef = await compiler(path.join(__dirname, "circuits", "sha256_test512.circom"),  {reduceConstraints:false}  );
         const circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("Vars: "+circuit.nVars);
-        console.log("Constraints: "+circuit.nConstraints);
+        //console.log("Vars: "+circuit.nVars);
+        //console.log("Constraints: "+circuit.nConstraints);
 
 /*
         const testStr = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
@@ -102,15 +102,15 @@ describe("SHA256 test", () => {
 
         assert.equal(hash, hash2);
 
-    }).timeout(1000000);
+    });
 
 
     it("Should calculate a hash of 2 compressor", async () => {
         const cirDef = await compiler(path.join(__dirname, "circuits", "sha256_test448.circom"),  {reduceConstraints:false}  );
         const circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("Vars: "+circuit.nVars);
-        console.log("Constraints: "+circuit.nConstraints);
+        //console.log("Vars: "+circuit.nVars);
+        //console.log("Constraints: "+circuit.nConstraints);
 
 
         const testStr = "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq";
@@ -132,5 +132,6 @@ describe("SHA256 test", () => {
 
         assert.equal(hash, hash2);
 
-    }).timeout(1000000);
+    });
 });
+it.runWhen(import.meta.url);
