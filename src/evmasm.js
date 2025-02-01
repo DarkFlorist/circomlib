@@ -3,7 +3,8 @@
 //
 
 
-const Web3Utils = require("web3-utils");
+const { bytesToHex, hexToBytes } = require('@noble/hashes/utils');
+const { numberToVarBytesBE } = require('@noble/curves/abstract/utils');
 
 class Contract {
     constructor() {
@@ -38,7 +39,7 @@ class Contract {
             genLoadedLength = C.code.length;
         }
 
-        return Web3Utils.bytesToHex(C.code.concat(this.code));
+        return `0x${bytesToHex(new Uint8Array(C.code.concat(this.code)))}`;
     }
 
     stop() { this.code.push(0x00); }
@@ -154,7 +155,12 @@ class Contract {
     }
 
     push(data) {
-        const d = Web3Utils.hexToBytes(Web3Utils.toHex(data));
+        let d;
+        // The code resembles previously used Web3Utils.hexToBytes from web3@1.0.0-beta.55
+        if (typeof data === 'string') d = Array.from(hexToBytes(data.replace(/^0x/, '')));
+        else if (data === -1) d = [-0, NaN]; // broken; but worked like this before
+        else if (data instanceof Uint8Array) d = Array.from(data);
+        else d = Array.from(numberToVarBytesBE(data));
         if (d.length == 0 || d.length > 32) {
             throw new Error("Assertion failed");
         }

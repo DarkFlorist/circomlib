@@ -1,4 +1,5 @@
-const createBlakeHash = require("blake-hash");
+const { blake512 } = require('@noble/hashes/blake1');
+const { concatBytes } = require('@noble/hashes/utils')
 const bigInt = require("snarkjs").bigInt;
 const babyJub = require("./babyjub");
 const pedersenHash = require("./pedersenHash").hash;
@@ -29,25 +30,25 @@ function pruneBuffer(_buff) {
 }
 
 function prv2pub(prv) {
-    const sBuff = pruneBuffer(createBlakeHash("blake512").update(prv).digest().slice(0,32));
+    const sBuff = pruneBuffer(blake512(prv).subarray(0, 32));
     let s = bigInt.leBuff2int(sBuff);
     const A = babyJub.mulPointEscalar(babyJub.Base8, s.shr(3));
     return A;
 }
 
 function sign(prv, msg) {
-    const h1 = createBlakeHash("blake512").update(prv).digest();
+    const h1 = blake512(prv);
     const sBuff = pruneBuffer(h1.slice(0,32));
     const s = bigInt.leBuff2int(sBuff);
     const A = babyJub.mulPointEscalar(babyJub.Base8, s.shr(3));
 
-    const rBuff = createBlakeHash("blake512").update(Buffer.concat([h1.slice(32,64), msg])).digest();
+    const rBuff = blake512(concatBytes(h1.subarray(32, 64), msg));
     let r = bigInt.leBuff2int(rBuff);
     r = r.mod(babyJub.subOrder);
     const R8 = babyJub.mulPointEscalar(babyJub.Base8, r);
     const R8p = babyJub.packPoint(R8);
     const Ap = babyJub.packPoint(A);
-    const hmBuff = pedersenHash(Buffer.concat([R8p, Ap, msg]));
+    const hmBuff = pedersenHash(concatBytes(R8p, Ap, msg));
     const hm = bigInt.leBuff2int(hmBuff);
     const S = r.add(hm.mul(s)).mod(babyJub.subOrder);
     return {
@@ -57,13 +58,13 @@ function sign(prv, msg) {
 }
 
 function signMiMC(prv, msg) {
-    const h1 = createBlakeHash("blake512").update(prv).digest();
+    const h1 = blake512(prv);
     const sBuff = pruneBuffer(h1.slice(0,32));
     const s = bigInt.leBuff2int(sBuff);
     const A = babyJub.mulPointEscalar(babyJub.Base8, s.shr(3));
 
     const msgBuff = bigInt.leInt2Buff(msg, 32);
-    const rBuff = createBlakeHash("blake512").update(Buffer.concat([h1.slice(32,64), msgBuff])).digest();
+    const rBuff = blake512.create().update(h1.subarray(32, 64)).update(msgBuff).digest();
     let r = bigInt.leBuff2int(rBuff);
     r = r.mod(babyJub.subOrder);
     const R8 = babyJub.mulPointEscalar(babyJub.Base8, r);
@@ -76,13 +77,13 @@ function signMiMC(prv, msg) {
 }
 
 function signMiMCSponge(prv, msg) {
-    const h1 = createBlakeHash("blake512").update(prv).digest();
+    const h1 = blake512(prv);
     const sBuff = pruneBuffer(h1.slice(0,32));
     const s = bigInt.leBuff2int(sBuff);
     const A = babyJub.mulPointEscalar(babyJub.Base8, s.shr(3));
 
     const msgBuff = bigInt.leInt2Buff(msg, 32);
-    const rBuff = createBlakeHash("blake512").update(Buffer.concat([h1.slice(32,64), msgBuff])).digest();
+    const rBuff = blake512.create().update(h1.slice(32, 64)).update(msgBuff).digest();
     let r = bigInt.leBuff2int(rBuff);
     r = r.mod(babyJub.subOrder);
     const R8 = babyJub.mulPointEscalar(babyJub.Base8, r);
@@ -95,13 +96,13 @@ function signMiMCSponge(prv, msg) {
 }
 
 function signPoseidon(prv, msg) {
-    const h1 = createBlakeHash("blake512").update(prv).digest();
+    const h1 = blake512(prv);
     const sBuff = pruneBuffer(h1.slice(0,32));
     const s = bigInt.leBuff2int(sBuff);
     const A = babyJub.mulPointEscalar(babyJub.Base8, s.shr(3));
 
     const msgBuff = bigInt.leInt2Buff(msg, 32);
-    const rBuff = createBlakeHash("blake512").update(Buffer.concat([h1.slice(32,64), msgBuff])).digest();
+    const rBuff = blake512.create().update(h1.slice(32, 64)).update(msgBuff).digest();
     let r = bigInt.leBuff2int(rBuff);
     r = r.mod(babyJub.subOrder);
     const R8 = babyJub.mulPointEscalar(babyJub.Base8, r);
@@ -127,7 +128,7 @@ function verify(msg, sig, A) {
 
     const R8p = babyJub.packPoint(sig.R8);
     const Ap = babyJub.packPoint(A);
-    const hmBuff = pedersenHash(Buffer.concat([R8p, Ap, msg]));
+    const hmBuff = pedersenHash(concatBytes(R8p, Ap, msg));
     const hm = bigInt.leBuff2int(hmBuff);
 
     const Pleft = babyJub.mulPointEscalar(babyJub.Base8, sig.S);
@@ -150,7 +151,7 @@ function verifyMiMC(msg, sig, A) {
     if (!babyJub.inCurve(A)) return false;
     if (sig.S>= babyJub.subOrder) return false;
 
-    const hm = mimc7.multiHash([sig.R8[0], sig.R8[1], A[0], A[1], msg]);
+    const hm = bigInt(mimc7.multiHash([sig.R8[0], sig.R8[1], A[0], A[1], msg]));
 
     const Pleft = babyJub.mulPointEscalar(babyJub.Base8, sig.S);
     let Pright = babyJub.mulPointEscalar(A, hm.mul(bigInt("8")));
@@ -174,7 +175,7 @@ function verifyPoseidon(msg, sig, A) {
     if (sig.S>= babyJub.subOrder) return false;
 
     const hash = poseidon.createHash(6, 8, 57);
-    const hm = hash([sig.R8[0], sig.R8[1], A[0], A[1], msg]);
+    const hm = bigInt(hash([sig.R8[0], sig.R8[1], A[0], A[1], msg]));
 
     const Pleft = babyJub.mulPointEscalar(babyJub.Base8, sig.S);
     let Pright = babyJub.mulPointEscalar(A, hm.mul(bigInt("8")));
@@ -196,7 +197,7 @@ function verifyMiMCSponge(msg, sig, A) {
     if (!babyJub.inCurve(A)) return false;
     if (sig.S>= babyJub.subOrder) return false;
 
-    const hm = mimcsponge.multiHash([sig.R8[0], sig.R8[1], A[0], A[1], msg]);
+    const hm = bigInt(mimcsponge.multiHash([sig.R8[0], sig.R8[1], A[0], A[1], msg]));
 
     const Pleft = babyJub.mulPointEscalar(babyJub.Base8, sig.S);
     let Pright = babyJub.mulPointEscalar(A, hm.mul(bigInt("8")));
@@ -210,7 +211,7 @@ function verifyMiMCSponge(msg, sig, A) {
 function packSignature(sig) {
     const R8p = babyJub.packPoint(sig.R8);
     const Sp = bigInt.leInt2Buff(sig.S, 32);
-    return Buffer.concat([R8p, Sp]);
+    return concatBytes(R8p, Sp);
 }
 
 function unpackSignature(sigBuff) {

@@ -1,22 +1,26 @@
-const bn128 = require("snarkjs").bn128;
-const bigInt = require("snarkjs").bigInt;
-const blake2b = require('blake2b');
-const assert = require("assert");
-const F = bn128.Fr;
+const { blake2b } = require('@noble/hashes/blake2b');
+const { bn254 } = require('@noble/curves/bn254');
+const { bytesToNumberLE } = require('@noble/curves/abstract/utils');
+//const noblePoseidon = require('@noble/curves/abstract/poseidon');
+const Fr = bn254.fields.Fr;
 
 const SEED = "poseidon";
 const NROUNDSF = 8;
 const NROUNDSP = 57;
 const T = 6;
 
+function toFr(x) {
+    if (typeof x === 'bigint') return x;
+    if (typeof x === 'number') return Fr.create(BigInt(x));
+    return Fr.create(x.value);
+}
+
 function getPseudoRandom(seed, n) {
     const res = [];
-    let input = Buffer.from(seed);
-    let h = blake2b(32).update(input).digest()
+    let h = blake2b(seed, { dkLen: 32 });
     while (res.length<n) {
-        const n = F.affine(bigInt.leBuff2int(h));
-        res.push(n);
-        h = blake2b(32).update(h).digest()
+        res.push(Fr.create(bytesToNumberLE(h)));
+        h = blake2b(h, { dkLen: 32 });
     }
 
     return res;
@@ -24,18 +28,15 @@ function getPseudoRandom(seed, n) {
 
 function allDifferent(v) {
     for (let i=0; i<v.length; i++) {
-        if (v[i].isZero()) return false;
+        if (Fr.is0(v[i])) return false;
         for (let j=i+1; j<v.length; j++) {
-            if (v[i].equals(v[j])) return false;
+            if (Fr.eql(v[i], v[j])) return false;
         }
     }
     return true;
 }
 
-exports.getMatrix = (t, seed, nRounds) => {
-    if (typeof seed === "undefined") seed = SEED;
-    if (typeof nRounds === "undefined") nRounds = NROUNDSF + NROUNDSP;
-    if (typeof t === "undefined") t = T;
+exports.getMatrix = (t = T, seed = SEED, nRounds = NROUNDSF + NROUNDSP) => {
     let nonce = "0000";
     let cmatrix = getPseudoRandom(seed+"_matrix_"+nonce, t*2);
     while (!allDifferent(cmatrix)) {
@@ -48,57 +49,48 @@ exports.getMatrix = (t, seed, nRounds) => {
     for (let i=0; i<t; i++) {
         M[i] = new Array(t);
         for (let j=0; j<t; j++) {
-            M[i][j] = F.affine(F.inverse(F.sub(cmatrix[i], cmatrix[t+j])));
+            M[i][j] = Fr.inv(Fr.sub(cmatrix[i], cmatrix[t + j]));
         }
     }
     return M;
 };
 
-exports.getConstants = (t, seed, nRounds) => {
-    if (typeof seed === "undefined") seed = SEED;
-    if (typeof nRounds === "undefined") nRounds = NROUNDSF + NROUNDSP;
-    if (typeof t === "undefined") t = T;
-    const cts = getPseudoRandom(seed+"_constants", nRounds);
-    return cts;
+exports.getConstants = (t = T, seed = SEED, nRounds = NROUNDSF + NROUNDSP) => {
+    return getPseudoRandom(seed + '_constants', nRounds);
 };
 
 function ark(state, c) {
     for (let j=0; j<state.length; j++ ) {
-        state[j] = F.add(state[j], c);
+        state[j] = Fr.add(state[j], c);
     }
 }
 
 function sigma(a) {
-    return F.mul(a, F.square(F.square(a,a)));
+    return Fr.mul(a, Fr.sqr(Fr.sqr(a, a)));
 }
 
 function mix(state, M) {
     const newState = new Array(state.length);
     for (let i=0; i<state.length; i++) {
-        newState[i] = F.zero;
+        newState[i] = Fr.ZERO;
         for (let j=0; j<state.length; j++) {
-            newState[i] = F.add(newState[i], F.mul(M[i][j], state[j]) );
+            newState[i] = Fr.add(newState[i], Fr.mul(M[i][j], state[j]));
         }
     }
     for (let i=0; i<state.length; i++) state[i] = newState[i];
 }
 
-exports.createHash = (t, nRoundsF, nRoundsP, seed) => {
-
-    if (typeof seed === "undefined") seed = SEED;
-    if (typeof nRoundsF === "undefined") nRoundsF = NROUNDSF;
-    if (typeof nRoundsP === "undefined") nRoundsP = NROUNDSP;
-    if (typeof t === "undefined") t = T;
-
-    assert(nRoundsF % 2 == 0);
+exports.createHash = (t = T, nRoundsF = NROUNDSF, nRoundsP = NROUNDSP, seed = SEED) => {
+    if (!(nRoundsF % 2 == 0)) throw new Error('nRoundsF % 2 == 0');
     const C = exports.getConstants(t, seed, nRoundsF + nRoundsP);
     const M = exports.getMatrix(t, seed, nRoundsF + nRoundsP);
     return function(inputs) {
         let state = [];
-        assert(inputs.length <= t);
-        assert(inputs.length > 0);
-        for (let i=0; i<inputs.length; i++) state[i] = bigInt(inputs[i]);
-        for (let i=inputs.length; i<t; i++) state[i] = F.zero;
+        if (!(inputs.length <= t)) throw new Error('inputs.length <= t');
+        if (!(inputs.length > 0)) throw new Error('inputs.length > 0');
+        inputs = inputs.map(toFr);
+        for (let i=0; i<inputs.length; i++) state[i] = BigInt(inputs[i]);
+        for (let i=inputs.length; i<t; i++) state[i] = Fr.ZERO;
 
         for (let i=0; i< nRoundsF + nRoundsP; i++) {
             ark(state, C[i]);
@@ -109,7 +101,7 @@ exports.createHash = (t, nRoundsF, nRoundsP, seed) => {
             }
             mix(state, M);
         }
-        return F.affine(state[0]);
+        return Fr.create(state[0]);
     };
 };
 

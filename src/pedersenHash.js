@@ -1,7 +1,7 @@
 const bn128 = require("snarkjs").bn128;
 const bigInt = require("snarkjs").bigInt;
 const babyJub = require("./babyjub");
-const createBlakeHash = require("blake-hash");
+const { blake256 } = require('@noble/hashes/blake1');
 
 const GENPOINT_PREFIX = "PedersenGenerator";
 const windowSize = 4;
@@ -64,7 +64,7 @@ function getBasePoint(pointIdx) {
     let tryIdx = 0;
     while (p==null) {
         const S = GENPOINT_PREFIX + "_" + padLeftZeros(pointIdx, 32) + "_" + padLeftZeros(tryIdx, 32);
-        const h = createBlakeHash("blake256").update(S).digest();
+        const h = blake256(S);
         h[31] = h[31] & 0xBF;  // Set 255th bit to 0 (256th is the signal and 254th is the last possible bit to 1)
         p = babyJub.unpackPoint(h);
         tryIdx++;
