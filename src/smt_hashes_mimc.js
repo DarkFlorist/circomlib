@@ -6,5 +6,5 @@ exports.hash0 = function (left, right) {
 };
 
 exports.hash1 = function(key, value) {
-    return bigInt(mimc7.multiHash([key, value], BigInt(1)));
+    return bigInt(mimc7.multiHash([key, value], 1n));
 };

@@ -22,7 +22,7 @@ function checkSub(_a,_b, circuit) {
 
     let res = a.sub(b);
     if (res.lesser(bigInt.zero)) res = res.add(bigInt.one.shl(16));
-    assert(w[circuit.getSignalIdx("main.out")].equals(bigInt(res)) );
+    assert(w[circuit.getSignalIdx("main.out")].equals(bigInt(res)));
 }
 
 describe("BinSub test", () => {
@@ -33,7 +33,6 @@ describe("BinSub test", () => {
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        //console.log("NConstrains BinSub: " + circuit.nConstraints);
     };
 
     it("Should check variuos edge cases", async () => {

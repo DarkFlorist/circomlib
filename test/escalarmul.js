@@ -8,9 +8,9 @@ import { assert } from './test_utils.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const bigInt = snarkjs.bigInt;
 
-const q=bigInt("21888242871839275222246405745257275088548364400416034343698204186575808495617");
+const q=21888242871839275222246405745257275088548364400416034343698204186575808495617n;
 function addPoint(a,b) {
-    const cta = bigInt("168700");
+    const cta = 168700n;
     const d = bigInt("168696");
 
     const res = [];
@@ -43,7 +43,7 @@ describe("Exponentioation test", () => {
         let g = [bigInt("5299619240641551281634865583518297030282874472190772894086521144482721001553"),
                  bigInt("16950150798460657717958625567821834550301663161624707787222815936182638968203")]
 
-        let dbl= [bigInt("0"), snarkjs.bigInt("1")];
+        let dbl= [0n, snarkjs.bigInt("1")];
 
         for (let i=0; i<16; i++) {
             const xout1 = w[circuit.getSignalIdx(`main.out[${i}][0]`)];

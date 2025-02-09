@@ -1,5 +1,3 @@
-//import ganache from 'ganache';
-//import Web3 from 'web3';
 import { describe, it } from 'micro-should';
 import mimcjs from '../src/mimc7.js';
 import mimcGenContract from '../src/mimc_gencontract.js';

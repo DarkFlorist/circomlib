@@ -1,5 +1,5 @@
 const { blake512 } = require('@noble/hashes/blake1');
-const { concatBytes } = require('@noble/hashes/utils')
+const { concatBytes } = require('@noble/hashes/utils');
 const bigInt = require("snarkjs").bigInt;
 const babyJub = require("./babyjub");
 const pedersenHash = require("./pedersenHash").hash;

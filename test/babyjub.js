@@ -18,15 +18,12 @@ describe("Baby Jub test", function () {
     const init = async() => {
         const cirDefAdd = await compiler(path.join(__dirname, "circuits", "babyadd_tester.circom"));
         circuitAdd = new snarkjs.Circuit(cirDefAdd);
-        //console.log("NConstrains BabyAdd: " + circuitAdd.nConstraints);
 
         const cirDefTest = await compiler(path.join(__dirname, "circuits", "babycheck_test.circom"));
         circuitTest = new snarkjs.Circuit(cirDefTest);
-        //console.log("NConstrains BabyTest: " + circuitTest.nConstraints);
 
         const cirDefPbk = await compiler(path.join(__dirname, "circuits", "babypbk_test.circom"));
         circuitPbk = new snarkjs.Circuit(cirDefPbk);
-        //console.log("NConstrains BabyPbk: " + circuitPbk.nConstraints);
 
     };
 

@@ -155,12 +155,11 @@ class Contract {
     }
 
     push(data) {
-        let d;
         // The code resembles previously used Web3Utils.hexToBytes from web3@1.0.0-beta.55
-        if (typeof data === 'string') d = Array.from(hexToBytes(data.replace(/^0x/, '')));
-        else if (data === -1) d = [-0, NaN]; // broken; but worked like this before
-        else if (data instanceof Uint8Array) d = Array.from(data);
-        else d = Array.from(numberToVarBytesBE(data));
+        const d = (typeof data === 'string') ? Array.from(hexToBytes(data.replace(/^0x/, '')))
+            : (data === -1) ? [-0, NaN] // broken; but worked like this before
+            : (data instanceof Uint8Array) ? Array.from(data)
+            : Array.from(numberToVarBytesBE(data));
         if (d.length == 0 || d.length > 32) {
             throw new Error("Assertion failed");
         }

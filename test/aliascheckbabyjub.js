@@ -36,7 +36,6 @@ describe("Aliascheck test", () => {
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        //console.log("NConstrains: " + circuit.nConstraints);
     };
 
     it("Satisfy the aliastest 0", async () => {

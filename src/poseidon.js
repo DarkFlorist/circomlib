@@ -1,7 +1,6 @@
 const { blake2b } = require('@noble/hashes/blake2b');
 const { bn254 } = require('@noble/curves/bn254');
 const { bytesToNumberLE } = require('@noble/curves/abstract/utils');
-//const noblePoseidon = require('@noble/curves/abstract/poseidon');
 const Fr = bn254.fields.Fr;
 
 const SEED = "poseidon";

@@ -16,8 +16,8 @@ exports.getConstants = (seed = SEED, nRounds = NROUNDS) => {
         c = keccak_256(c);
         cts[i] = Fr.create(Fr.fromBytes(c));
     }
-    cts[0] = BigInt(0);
-    cts[cts.length - 1] = BigInt(0);
+    cts[0] = 0n;
+    cts[cts.length - 1] = 0n;
     return cts;
 };
 
@@ -29,7 +29,7 @@ exports.hash = (_xL_in, _xR_in, _k) =>{
     const k = BigInt(_k);
     for (let i=0; i<NROUNDS; i++) {
         const c = cts[i];
-        const t = (i==0) ? Fr.addN(xL, k) : Fr.addN(Fr.addN(xL, k), cts[i]);
+        const t = (i==0) ? Fr.addN(xL, k) : Fr.addN(Fr.addN(xL, k), c);
         const xR_tmp = BigInt(xR);
         if (i < (NROUNDS - 1)) {
           xR = xL;

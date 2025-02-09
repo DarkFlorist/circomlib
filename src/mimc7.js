@@ -23,7 +23,7 @@ exports.getConstants = (seed = SEED, nRounds = NROUNDS) => {
 
         cts[i] = Fr.create(Fr.fromBytes(c));
     }
-    cts[0] = BigInt(0);
+    cts[0] = 0n;
     return cts;
 };
 

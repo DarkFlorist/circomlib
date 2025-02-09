@@ -1,7 +1,5 @@
 import { describe, it } from 'micro-should';
 import { assert } from './test_utils.js';
-//const ganache = require('ganache-cli');
-//const Web3 = require('web3');
 import mimcjs from '../src/mimcsponge.js';
 import mimcGenContract from '../src/mimcsponge_gencontract.js';
 
