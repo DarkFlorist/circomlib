@@ -1,64 +1,50 @@
-const bn128 = require("snarkjs").bn128;
-const bigInt = require("snarkjs").bigInt;
-const Web3Utils = require("web3-utils");
-const F = bn128.Fr;
+const { keccak_256 } = require('@noble/hashes/sha3');
+const { bn254 } = require('@noble/curves/bn254');
+const Fr = bn254.fields.Fr;
 
 const SEED = "mimc";
 const NROUNDS = 91;
 
-exports.getIV = (seed) => {
-    if (typeof seed === "undefined") seed = SEED;
-    const c = Web3Utils.keccak256(seed+"_iv");
-    const cn = bigInt(Web3Utils.toBN(c).toString());
-    const iv = cn.mod(F.q);
-    return iv;
+function toFr(x) {
+    if (typeof x === 'bigint') return x;
+    if (typeof x === 'number') return Fr.create(BigInt(x));
+    return Fr.create(x.value);
+}
+
+exports.getIV = (seed = SEED) => {
+    return Fr.create(Fr.fromBytes(keccak_256(`${seed}_iv`)));
 };
 
-exports.getConstants = (seed, nRounds) => {
-    if (typeof seed === "undefined") seed = SEED;
-    if (typeof nRounds === "undefined") nRounds = NROUNDS;
+exports.getConstants = (seed = SEED, nRounds = NROUNDS) => {
     const cts = new Array(nRounds);
-    let c = Web3Utils.keccak256(SEED);
+    let c = keccak_256(SEED);
     for (let i=1; i<nRounds; i++) {
-        c = Web3Utils.keccak256(c);
+        c = keccak_256(c);
 
-        const n1 = Web3Utils.toBN(c).mod(Web3Utils.toBN(F.q.toString()));
-        const c2 = Web3Utils.padLeft(Web3Utils.toHex(n1), 64);
-        cts[i] = bigInt(Web3Utils.toBN(c2).toString());
+        cts[i] = Fr.create(Fr.fromBytes(c));
     }
-    cts[0] = bigInt(0);
+    cts[0] = 0n;
     return cts;
 };
 
 const cts = exports.getConstants(SEED, 91);
 
 exports.hash =  (_x_in, _k) =>{
-    const x_in = bigInt(_x_in);
-    const k = bigInt(_k);
+    const x_in = BigInt(_x_in);
+    const k = BigInt(_k);
     let r;
     for (let i=0; i<NROUNDS; i++) {
-        const c = cts[i];
-        const t = (i==0) ? F.add(x_in, k) : F.add(F.add(r, k), c);
-        r = F.exp(t, 7);
+        const t = (i==0) ? Fr.addN(x_in, k) : Fr.addN(Fr.addN(r, k), cts[i]);
+        r = Fr.pow(t, BigInt(7));
     }
-    return F.affine(F.add(r, k));
+    return Fr.add(r, k);
 };
 
-exports.multiHash = (arr, key) => {
-    let r;
-    if (typeof(key) === "undefined") {
-        r = F.zero;
-    } else {
-        r = key;
-    }
+exports.multiHash = (arr, key = Fr.ZERO) => {
+    let r = toFr(key);
+    arr = arr.map(toFr);
     for (let i=0; i<arr.length; i++) {
-        r = F.add(
-            F.add(
-                r,
-                arr[i]
-            ),
-            exports.hash(bigInt(arr[i]), r)
-        );
+        r = Fr.addN(Fr.addN(r, arr[i]), exports.hash(BigInt(arr[i]), r));
     }
-    return F.affine(r);
+    return Fr.create(r);
 };

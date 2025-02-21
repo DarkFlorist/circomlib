@@ -1,10 +1,11 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-
-const assert = chai.assert;
-
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const bigInt = snarkjs.bigInt;
 
 
@@ -19,7 +20,7 @@ describe("Mux4 test", () => {
 
         const circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains Mux4: " + circuit.nConstraints);
+        //console.log("NConstrains Mux4: " + circuit.nConstraints);
 
         const ct16 = [
             bigInt("123"),
@@ -58,7 +59,7 @@ describe("Mux4 test", () => {
 
         const circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains Mux3: " + circuit.nConstraints);
+        //console.log("NConstrains Mux3: " + circuit.nConstraints);
 
         const ct8 = [
             bigInt("37"),
@@ -86,7 +87,7 @@ describe("Mux4 test", () => {
 
         const circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains Mux2: " + circuit.nConstraints);
+        //console.log("NConstrains Mux2: " + circuit.nConstraints);
 
         const ct8 = [
             bigInt("37"),
@@ -112,7 +113,7 @@ describe("Mux4 test", () => {
 
         const circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains Mux1: " + circuit.nConstraints);
+        //console.log("NConstrains Mux1: " + circuit.nConstraints);
 
         const ct8 = [
             bigInt("37"),
@@ -131,3 +132,4 @@ describe("Mux4 test", () => {
         }
     });
 });
+it.runWhen(import.meta.url);

@@ -2,13 +2,14 @@
 // License: LGPL-3.0+
 //
 
-const Web3Utils = require("web3-utils");
+const { keccak_256 } = require('@noble/hashes/sha3');
+const { bytesToHex } = require('@noble/hashes/utils');
 
 const Contract = require("./evmasm");
 
 function createCode(seed, n) {
 
-    let ci = Web3Utils.keccak256(seed);
+    let ci = keccak_256(seed);
 
     const C = new Contract();
 
@@ -46,9 +47,9 @@ function createCode(seed, n) {
 
     for (let i=0; i<n-1; i++) {
         if (i < n-2) {
-          ci = Web3Utils.keccak256(ci);
+            ci = keccak_256(ci);
         } else {
-          ci = "0x00";
+            ci = new Uint8Array(1);
         }
         C.swap(1);      // xR xL q
         C.dup(2);       // q xR xL q

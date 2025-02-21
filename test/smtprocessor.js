@@ -1,12 +1,12 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-
-const smt = require("../src/smt.js");
-
-const assert = chai.assert;
-
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import smt from '../src/smt.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const bigInt = snarkjs.bigInt;
 
 function print(circuit, w, s) {
@@ -83,20 +83,19 @@ async function testUpdate(tree, key, newValue, circuit) {
 describe("SMT test", function () {
     let circuit;
     let tree;
-
-    this.timeout(10000000);
-
-    before( async () => {
+    const init = async () => {
+        if (circuit) return;
         const cirDef = await compiler(path.join(__dirname, "circuits", "smtprocessor10_test.circom"));
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains SMTProcessor: " + circuit.nConstraints);
+        //console.log("NConstrains SMTProcessor: " + circuit.nConstraints);
 
         tree = await smt.newMemEmptyTrie();
-    });
+    };
 
     it("Should verify an insert to an empty tree", async () => {
+        await init();
         const key = bigInt(111);
         const value = bigInt(222);
 
@@ -104,6 +103,7 @@ describe("SMT test", function () {
     });
 
     it("It should add another element", async () => {
+        await init();
         const key = bigInt(333);
         const value = bigInt(444);
 
@@ -113,11 +113,13 @@ describe("SMT test", function () {
 
 
     it("Should remove an element", async () => {
+        await init();
         await testDelete(tree, 111, circuit);
         await testDelete(tree, 333, circuit);
     });
 
     it("Should test convination of adding and removing 3 elements", async () => {
+        await init();
         const keys = [bigInt(8), bigInt(9), bigInt(32)];
         const values = [bigInt(88), bigInt(99), bigInt(3232)];
         const tree1 = await smt.newMemEmptyTrie();
@@ -177,6 +179,7 @@ describe("SMT test", function () {
     });
 
     it("Should match a NOp with random vals", async () => {
+        await init();
         let siblings = [];
         while (siblings.length<10) siblings.push(bigInt(88));
         const w = circuit.calculateWitness({
@@ -198,6 +201,7 @@ describe("SMT test", function () {
 
     });
     it("Should update an element", async () => {
+        await init();
         const tree1 = await smt.newMemEmptyTrie();
         const tree2 = await smt.newMemEmptyTrie();
 
@@ -215,3 +219,4 @@ describe("SMT test", function () {
     });
 
 });
+it.runWhen(import.meta.url);

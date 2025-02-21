@@ -1,23 +1,22 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-
-const mimcjs = require("../src/mimcsponge.js");
-
-const assert = chai.assert;
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import mimcjs from '../src/mimcsponge.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("MiMC Sponge Circuit test", function () {
     let circuit;
-
-    this.timeout(100000);
 
     it("Should check permutation", async () => {
         const cirDef = await compiler(path.join(__dirname, "circuits", "mimc_sponge_test.circom"));
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("MiMC Feistel constraints: " + circuit.nConstraints);
+        //console.log("MiMC Feistel constraints: " + circuit.nConstraints);
 
         const w = circuit.calculateWitness({xL_in: 1, xR_in: 2, k: 3});
 
@@ -38,7 +37,7 @@ describe("MiMC Sponge Circuit test", function () {
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("MiMC Sponge constraints: " + circuit.nConstraints);
+        //console.log("MiMC Sponge constraints: " + circuit.nConstraints);
 
         const w = circuit.calculateWitness({ins: [1, 2], k: 0});
 
@@ -56,3 +55,4 @@ describe("MiMC Sponge Circuit test", function () {
 
     });
 });
+it.runWhen(import.meta.url);

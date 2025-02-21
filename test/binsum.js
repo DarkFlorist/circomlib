@@ -1,11 +1,11 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const crypto = require("crypto");
-
-const compiler = require("circom");
-
-const assert = chai.assert;
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("Sum test", () => {
     it("Should create a constant circuit", async () => {
@@ -33,3 +33,4 @@ describe("Sum test", () => {
         assert(witness[1].equals(snarkjs.bigInt("333")));
     });
 });
+it.runWhen(import.meta.url);

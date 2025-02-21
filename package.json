@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha --max-old-space-size=4000"
+    "test": "node test/index.js"
   },
   "keywords": [
     "pedersen",
@@ -24,16 +24,12 @@
   "author": "0Kims",
   "license": "GPL-3.0",
   "dependencies": {
-    "blake-hash": "^1.1.0",
-    "blake2b": "^2.1.3",
-    "snarkjs": "git+https://github.com/peppersec/snarkjs.git#869181cfaf7526fe8972073d31655493a04326d5",
-    "typedarray-to-buffer": "^3.1.5",
-    "web3": "^1.0.0-beta.55"
+    "@noble/curves": "1.8.1",
+    "@noble/hashes": "1.7.1",
+    "snarkjs": "git@github.com:DarkFlorist/snarkjs.git#e8a305d593c3f1e5ad8bbe82a2a8044e9113db60"
   },
   "devDependencies": {
-    "circom": "0.0.35",
-    "eslint-plugin-mocha": "^5.2.0",
-    "ganache-cli": "^6.4.4",
-    "mocha": "^5.2.0"
+    "circom": "git@github.com:DarkFlorist/circom_old.git#ee48f9085e58a6590553b8bd584b4f969305860d",
+    "micro-should": "0.5.1"
   }
 }

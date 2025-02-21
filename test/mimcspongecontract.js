@@ -1,11 +1,9 @@
-const ganache = require("ganache-cli");
-const Web3 = require("web3");
-const chai = require("chai");
-const mimcGenContract = require("../src/mimcsponge_gencontract.js");
-const mimcjs = require("../src/mimcsponge.js");
+import { describe, it } from 'micro-should';
+import { assert } from './test_utils.js';
+import mimcjs from '../src/mimcsponge.js';
+import mimcGenContract from '../src/mimcsponge_gencontract.js';
 
 
-const assert = chai.assert;
 const log = (msg) => { if (process.env.MOCHA_VERBOSE) console.log(msg); };
 
 const SEED = "mimcsponge";
@@ -16,12 +14,14 @@ describe("MiMC Sponge Smart contract test", () => {
     let mimc;
     let accounts;
 
-    before(async () => {
+    const init = async () => {
+        if (web3) return;
         web3 = new Web3(ganache.provider(), null, { transactionConfirmationBlocks: 1 });
         accounts = await web3.eth.getAccounts();
-    });
+    };
 
     it("Should deploy the contract", async () => {
+        await init();
         const C = new web3.eth.Contract(mimcGenContract.abi);
 
         mimc = await C.deploy({
@@ -33,6 +33,7 @@ describe("MiMC Sponge Smart contract test", () => {
     });
 
     it("Shold calculate the mimc correctly", async () => {
+        await init();
         const res = await mimc.methods.MiMCSponge(1,2).call();
         const res2 = await mimcjs.hash(1,2, 0);
 
@@ -40,4 +41,5 @@ describe("MiMC Sponge Smart contract test", () => {
         assert.equal(res.xR.toString(), res2.xR.toString());
     });
 });
+it.runWhen(import.meta.url);
 

@@ -1,11 +1,12 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-const babyjub = require("../src/babyjub");
-
-const assert = chai.assert;
-
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import babyjub from '../src/babyjub.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const bigInt = snarkjs.bigInt;
 
 
@@ -15,17 +16,15 @@ function print(circuit, w, s) {
 
 describe("Escalarmul test", function () {
     let circuit;
-
-    this.timeout(100000);
-
-    before( async() => {
+    const init = async() => {
+        if (circuit) return;
         const cirDef = await compiler(path.join(__dirname, "circuits", "escalarmulfix_test.circom"));
         circuit = new snarkjs.Circuit(cirDef);
-        console.log("NConstrains Escalarmul fix: " + circuit.nConstraints);
-    });
+        //console.log("NConstrains Escalarmul fix: " + circuit.nConstraints);
+    };
 
     it("Should generate Same escalar mul", async () => {
-
+        await init();
         const w = circuit.calculateWitness({"e": 0});
 
         assert(circuit.checkWitness(w));
@@ -38,7 +37,7 @@ describe("Escalarmul test", function () {
     });
 
     it("Should generate Same escalar mul", async () => {
-
+        await init();
         const w = circuit.calculateWitness({"e": 1});
 
         assert(circuit.checkWitness(w));
@@ -51,7 +50,7 @@ describe("Escalarmul test", function () {
     });
 
     it("Should generate scalar mul of a specific constant", async () => {
-
+        await init();
         const s = bigInt("2351960337287830298912035165133676222414898052661454064215017316447594616519");
         const base8 = [
             bigInt("5299619240641551281634865583518297030282874472190772894086521144482721001553"),
@@ -72,7 +71,7 @@ describe("Escalarmul test", function () {
     });
 
     it("Should generate scalar mul of the firsts 50 elements", async () => {
-
+        await init();
         const base8 = [
             bigInt("5299619240641551281634865583518297030282874472190772894086521144482721001553"),
             bigInt("16950150798460657717958625567821834550301663161624707787222815936182638968203")
@@ -96,7 +95,7 @@ describe("Escalarmul test", function () {
     });
 
     it("If multiply by order should return 0", async () => {
-
+        await init();
         const w = circuit.calculateWitness({"e": babyjub.subOrder });
 
         assert(circuit.checkWitness(w));
@@ -109,4 +108,4 @@ describe("Escalarmul test", function () {
     });
 
 });
-
+it.runWhen(import.meta.url);

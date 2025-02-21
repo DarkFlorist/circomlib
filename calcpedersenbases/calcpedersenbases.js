@@ -1,11 +1,11 @@
 const bn128 = require("snarkjs").bn128;
 const bigInt = require("snarkjs").bigInt;
-const createBlakeHash = require("blake-hash");
+const { blake256 } = require('@noble/hashes/blake1');
 const babyJub = require("../src/babyjub");
 
 function getPoint(S) {
     const F = bn128.Fr;
-    const h = createBlakeHash("blake256").update(S).digest();
+    const h = blake256(S);
 
     if (h.length != 32) {
         throw new Error("Invalid length")

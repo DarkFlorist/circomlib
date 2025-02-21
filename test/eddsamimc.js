@@ -1,28 +1,27 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-
-const eddsa = require("../src/eddsa.js");
-
-const assert = chai.assert;
-
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import eddsa from '../src/eddsa.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const bigInt = snarkjs.bigInt;
 
 describe("EdDSA MiMC test", function () {
     let circuit;
-
-    this.timeout(100000);
-
-    before( async () => {
+    const init = async () => {
+        if (circuit) return;
         const cirDef = await compiler(path.join(__dirname, "circuits", "eddsamimc_test.circom"));
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains EdDSA MiMC: " + circuit.nConstraints);
-    });
+        //console.log("NConstrains EdDSA MiMC: " + circuit.nConstraints);
+    };
 
     it("Sign a single number", async () => {
+        await init();
         const msg = bigInt(1234);
 
         const prvKey = Buffer.from("0001020304050607080900010203040506070809000102030405060708090001", "hex");
@@ -46,6 +45,7 @@ describe("EdDSA MiMC test", function () {
     });
 
     it("Detect Invalid signature", async () => {
+        await init();
         const msg = bigInt(1234);
 
         const prvKey = Buffer.from("0001020304050607080900010203040506070809000102030405060708090001", "hex");
@@ -73,6 +73,7 @@ describe("EdDSA MiMC test", function () {
 
 
     it("Test a dissabled circuit with a bad signature", async () => {
+        await init();
         const msg = bigInt(1234);
 
         const prvKey = Buffer.from("0001020304050607080900010203040506070809000102030405060708090001", "hex");
@@ -96,3 +97,4 @@ describe("EdDSA MiMC test", function () {
         assert(circuit.checkWitness(w));
     });
 });
+it.runWhen(import.meta.url);

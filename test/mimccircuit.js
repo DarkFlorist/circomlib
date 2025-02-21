@@ -1,26 +1,20 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-
-const mimcjs = require("../src/mimc7.js");
-
-const assert = chai.assert;
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import mimcjs from '../src/mimc7.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 describe("MiMC Circuit test", function () {
-    let circuit;
-
-    this.timeout(100000);
-
-    before( async () => {
+    it("Should check constrain", async () => {
         const cirDef = await compiler(path.join(__dirname, "circuits", "mimc_test.circom"));
 
-        circuit = new snarkjs.Circuit(cirDef);
+        const circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("MiMC constraints: " + circuit.nConstraints);
-    });
-
-    it("Should check constrain", async () => {
+        // console.log("MiMC constraints: " + circuit.nConstraints);
         const w = circuit.calculateWitness({x_in: 1, k: 2});
 
         const res = w[circuit.getSignalIdx("main.out")];
@@ -33,3 +27,4 @@ describe("MiMC Circuit test", function () {
 
     });
 });
+it.runWhen(import.meta.url);

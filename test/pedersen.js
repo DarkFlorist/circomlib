@@ -1,13 +1,14 @@
-const chai = require("chai");
-const path = require("path");
-const snarkjs = require("snarkjs");
-const compiler = require("circom");
-
-const assert = chai.assert;
+import compiler from 'circom';
+import { describe, it } from 'micro-should';
+import * as path from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import snarkjs from 'snarkjs';
+import babyJub from '../src/babyjub.js';
+import { assert } from './test_utils.js';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const bigInt = snarkjs.bigInt;
-
-const babyJub = require("../src/babyjub.js");
 
 const PBASE =
     [
@@ -20,16 +21,16 @@ const PBASE =
 
 describe("Double Pedersen test", function() {
     let circuit;
-    this.timeout(100000);
-    before( async() => {
+    const init = async() => {
+        if (circuit) return;
         const cirDef = await compiler(path.join(__dirname, "circuits", "pedersen_test.circom"));
 
         circuit = new snarkjs.Circuit(cirDef);
 
-        console.log("NConstrains: " + circuit.nConstraints);
-    });
+        //console.log("NConstrains: " + circuit.nConstraints);
+    };
     it("Should pedersen at zero", async () => {
-
+        await init();
         let w, xout, yout;
 
         w = circuit.calculateWitness({ in: ["0", "0"]});
@@ -41,6 +42,7 @@ describe("Double Pedersen test", function() {
         assert(yout.equals("1"));
     });
     it("Should pedersen at one first generator", async () => {
+        await init();
         let w, xout, yout;
 
         w = circuit.calculateWitness({ in: ["1", "0"]});
@@ -52,6 +54,7 @@ describe("Double Pedersen test", function() {
         assert(yout.equals(PBASE[0][1]));
     });
     it("Should pedersen at one second generator", async () => {
+        await init();
         let w, xout, yout;
 
         w = circuit.calculateWitness({ in: ["0", "1"]});
@@ -64,6 +67,7 @@ describe("Double Pedersen test", function() {
 
     });
     it("Should pedersen at mixed generators", async () => {
+        await init();
         let w, xout, yout;
         w = circuit.calculateWitness({ in: ["3", "7"]});
 
@@ -81,6 +85,7 @@ describe("Double Pedersen test", function() {
 
     });
     it("Should pedersen all ones", async () => {
+        await init();
         let w, xout, yout;
 
         const allOnes = bigInt("1").shl(250).sub(bigInt("1"));
@@ -98,3 +103,4 @@ describe("Double Pedersen test", function() {
         assert(yout.equals(r2[1]));
     });
 });
+it.runWhen(import.meta.url);
